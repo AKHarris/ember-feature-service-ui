@@ -29,40 +29,47 @@ export default Ember.Component.extend({
 
     fields.get('content').pushObjects(f);
 
+    window.fields = fields;
     return fields;
   }),
 
   isAllOutFields: Ember.computed.empty('fields.outFields'),
 
-  params: Ember.Object.create({
-    outFields: '*',
-    f: 'json',
-  }),
-
   queryHost: Ember.computed('dataset', function() {
     return this.get('dataset').attributes.url + '/query'
   }),
 
-  params: Ember.Object.create({
-    outFields: '*',
-    f: 'json',
+  //params
+  outFields: Ember.computed('fields.outFields', function() {
+    let outFields = this.get('fields').get('outFields');
+
+    let qString = outFields.map(function(field, index, array) {
+      return field.name;
+    }).join(',');
+
+console.log(qString);
+
+    return qString;
   }),
 
-  queryString: Ember.computed('params', function() {
-    let qString = [];
-    let params = this.get('params');
-    let fsParams = [
-      'outFields',
-      'f'
-    ];
+  f: 'json',
 
-    window.params;
+  //end of params
 
-    fsParams.forEach(function(param, index, array) {
-      qString.pushObject(param + '=' + params.get(param));
-    });
+  queryString: Ember.computed('outFields', 'f', function() {
+    let qString = '';
+    if (Ember.computed.empty(this.get('outFields'))) {
+      qString += 'outFields=*&';
+    } else {
+      var outFields = this.get('outFields').map(function(field, index, array) {
+        return field.name;
+      }).join(',');
+      qString += 'outFields=' + outFields + '&';
+    }
 
-    return qString.join('&');
+    qString +=  'f=' + this.get('f');
+
+    return qString;
   }),
 
   queryUrl: Ember.computed('queryHost', 'queryString', function() {
@@ -80,24 +87,10 @@ export default Ember.Component.extend({
       } else {
         updatedField.set('requested', true);
       }
-
-      this._updateQueryString();
     },
 
     clearOutFields() {
       this.get('fields').get('content').setEach('requested', false);
-      this._updateQueryString();
-    }
-  },
-
-  _updateQueryString() {
-    if (this.get('isAllOutFields')) {
-      this.get('params').set('outFields', '*');
-    } else {
-      var params = this.get('fields').get('outFields').map(function(field, index, array) {
-        return field.name;
-      });
-      this.get('params').set('outFields', params.join(','));
     }
   },
 
