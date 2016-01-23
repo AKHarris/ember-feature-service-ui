@@ -35,7 +35,7 @@ export default Ember.Component.extend({
   isAllOutFields: Ember.computed.empty('fields.outFields'),
 
   params: Ember.Object.create({
-    outFields: {},
+    outFields: '*',
     f: 'json',
   }),
 
@@ -43,7 +43,27 @@ export default Ember.Component.extend({
     return this.get('dataset').attributes.url + '/query'
   }),
 
-  queryString: '',
+  params: Ember.Object.create({
+    outFields: '*',
+    f: 'json',
+  }),
+
+  queryString: Ember.computed('params', function() {
+    let qString = [];
+    let params = this.get('params');
+    let fsParams = [
+      'outFields',
+      'f'
+    ];
+
+    window.params;
+
+    fsParams.forEach(function(param, index, array) {
+      qString.pushObject(param + '=' + params.get(param));
+    });
+
+    return qString.join('&');
+  }),
 
   queryUrl: Ember.computed('queryHost', 'queryString', function() {
     return this.get('queryHost') + '?' + this.get('queryString');
@@ -61,30 +81,24 @@ export default Ember.Component.extend({
         updatedField.set('requested', true);
       }
 
-      this._outFieldsQueryString();
+      this._updateQueryString();
     },
 
     clearOutFields() {
       this.get('fields').get('content').setEach('requested', false);
-      this._outFieldsQueryString();
+      this._updateQueryString();
     }
   },
 
-  _outFieldsQueryString: function() {
-    var _params;
-    console.log(this.get('isAllOutFields'));
+  _updateQueryString() {
     if (this.get('isAllOutFields')) {
-      this.set('queryString', 'outFields=*');
+      this.get('params').set('outFields', '*');
     } else {
-      _params = this.get('fields').get('outFields').map(function(field, index, array) {
+      var params = this.get('fields').get('outFields').map(function(field, index, array) {
         return field.name;
       });
+      this.get('params').set('outFields', params.join(','));
     }
-
-    var qs = 'outFields=' + _params;
-    console.log(qs);
-
-    this.set('queryString', qs);
   },
 
 });
