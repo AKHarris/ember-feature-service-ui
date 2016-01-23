@@ -1,0 +1,25 @@
+<p>feature service ui addon</p>
+
+<p>Request Url</p>
+{{queryUrl}}
+<br>
+<br>
+
+<form>
+
+<h3>OutFields</h3>
+  <label>
+    <input type='checkbox' value="*" checked={{isAllOutFields}} onclick={{action 'clearOutFields'}}>
+    all fields (*)
+  </label>
+  <br>
+  
+  {{#each fields.content as |field|}}
+    <label>
+      <input type='checkbox' 
+      value={{field.name}} checked={{field.requested}} onclick={{action 'updateOutFields' field}}>
+      {{field.name}}
+    </label>
+    <br>
+  {{/each}}
+</form>
