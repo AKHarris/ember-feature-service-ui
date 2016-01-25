@@ -1,7 +1,7 @@
 <p>feature service ui addon</p>
 
 <p>Request Url</p>
-{{queryUrl}}
+{{queryString}}
 <br>
 <br>
 
@@ -14,7 +14,7 @@
   </label>
   <br>
   
-  {{#each fields.content as |field|}}
+  {{#each fields as |field|}}
     <label>
       <input type='checkbox' 
       value={{field.name}} checked={{field.requested}} onclick={{action 'updateOutFields' field}}>
