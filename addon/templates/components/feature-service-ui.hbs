@@ -1,24 +1,252 @@
 <p>feature service ui addon</p>
 
-<p>Request Url</p>
-{{queryString}}
+{{#if displayLayerMetadata}}
+<h2>Feature Layer Metadata</h2>
+<div>
+  <ul>
+    <li>Server version: {{dataset.attributes.currentVersion}}</li>
+    <li>Record count: {{dataset.attributes.recordCount}}</li>
+    <li>Max record count: {{dataset.attributes.maxRecordCount}}</li>
+    <li>
+      Advanced Query Capabilities
+      <ul>
+        {{#each-in dataset.attributes.advancedQueryCapabilities as |capability enabled|}}
+          <li>{{capability}}: {{enabled}}</li>
+        {{/each-in}}
+      </ul>
+      </li>
+      <li>
+        Service Spatial Reference
+        <ul>
+          {{#each-in dataset.attributes.serviceSpatialReference as |key value|}}
+            <li>{{key}}: {{value}}</li>
+          {{/each-in}}
+        </ul>
+      </li>
+  </ul>
+</div>
+{{/if}}
+
+<h3>Request Url</h3>
+<div style='width: inherit; word-break: break-word;'>
+  {{queryString}}
+</div>
 <br>
 <br>
 
+<h2>Request Parameters</h2>
 <form>
 
-<h3>OutFields</h3>
+  <h3>Where</h3>
+  <p>A where clause for the query filter. Any legal SQL where clause operating on the fields in the layer is allowed.</p>
   <label>
-    <input type='checkbox' value="*" checked={{isAllOutFields}} onclick={{action 'clearOutFields'}}>
-    all fields (*)
+    Where
+    {{input type='text' value=where}}
   </label>
-  <br>
-  
-  {{#each fields as |field|}}
+
+  {{#unless isStatisticsRequest}}
+  <h3>Object Ids</h3>
+  <p>The object IDs of this layer/table to be queried.</p>
+  <label>
+    Object IDs
+    {{input type='text' value=objectIds}}
+  </label>
+
+  <h3>OutFields</h3>
+    <p>The list of fields to be included in the returned result set. This list is a comma delimited list of field names. You can also specify the wildcard "*" as the value of this parameter. In this case, the query results include all the field values.</p>
     <label>
-      <input type='checkbox' 
-      value={{field.name}} checked={{field.requested}} onclick={{action 'updateOutFields' field}}>
-      {{field.name}}
+      <input type='checkbox' value="*" checked={{isAllOutFields}} onclick={{action 'clearOutFields'}}>
+      all fields (*)
     </label>
-  {{/each}}
+    <br>
+  
+    {{#each fields as |field|}}
+      <label>
+        <input type='checkbox' 
+        value={{field.name}} checked={{field.requested}} onclick={{action 'updateOutFields' field}}>
+        {{field.name}}
+      </label>
+    {{/each}}
+
+    <br>
+    <br>
+    <hr>
+    
+    <label>
+      Spatial Query?
+      <input type='checkbox' value=true checked={{isSpatialQuery}} onclick={{action 'toggleSpatialQuery'}}>
+    </label>
+    
+    {{#if isSpatialQuery}}
+      <h2>Spatial Query Inputs</h2>
+      <h3>Geometry</h3>
+      <p>The geometry to apply as the spatial filter. The structure of the geometry is the same as the structure of the json geometry objects returned by the ArcGIS REST API. In addition to the JSON structures, for envelopes and points, you can specify the geometry with a simpler comma-separated syntax.</p>
+      <label>
+        geometry
+        {{input type='text' value=geometry size='50'}}
+      </label>
+      <br>
+      <h3>geometryType</h3>
+      <p>The type of geometry specified by the geometry parameter. The geometry type can be an envelope, point, line, or polygon. The default geometry type is an envelope.</p>
+      <label>
+        geometryType
+        <select onchange={{action 'selectGeometryType' value='target.value'}}>
+          {{#each geometryTypes as |type|}}
+            <option value={{type}}>
+              {{type}}
+            </option>
+          {{/each}}
+        </select>
+      </label>
+      <br>
+      <h3>Input Spatial Reference</h3>
+      <p>The spatial reference of the input geometry. The spatial reference can be specified as either a well-known ID or as a spatial reference JSON object. If the inSR is not specified, the geometry is assumed to be in the spatial reference of the map.</p>
+      <label>
+        inSR
+        {{input value=inSR}}
+      </label>
+      <br>
+      <h3>spatialRel</h3>
+      <p>The spatial relationship to be applied on the input geometry while performing the query. The supported spatial relationships include intersects, contains, envelope intersects, within, and so on. The default spatial relationship is intersects (esriSpatialRelIntersects).</p>
+      <label>
+        spatialRel
+        <select onchange={{action 'selectSpatialRel' value='target.value'}} >
+          {{#each spatialRels as |rel|}}
+            <option value={{rel}}>
+              {{rel}}
+            </option>
+          {{/each}}
+        </select>
+      </label>
+      <br>
+      {{#if dataset.attributes.advancedQueryCapabilities.supportsQueryWithDistance}}
+        <h4>supportsQueryWithDistance is enabled</h4>
+        <h3>Distance</h3>
+        <p>The buffer distance for the input geometries. The distance unit is specified by units. For example, if the distance is 100, the query geometry is a point, units is set to meters, and all points within 100 meters of the point are returned. The geodesic buffer is created based on the datum of the output spatial reference if it exists. If there is no output spatial reference, the input geometry spatial reference is used. Otherwise, the native layer spatial reference is used to generate the geometry buffer used in the query.</p>
+        <label>
+          Distance
+          {{input type='text' value=distance}}
+        </label>
+        <br>
+        <h3>Units</h3>
+        <p>The unit for calculating the buffer distance. If unit is not specified, the unit is derived from the geometry spatial reference. If the geometry spatial reference is not specified, the unit is derived from the feature service data spatial reference.</p>
+        <label>
+          Units
+          <select onchange={{action 'selectUnit' value='target.value'}} >
+            {{#each _units as |_unit|}}
+              <option value={{_unit}}>
+                {{_unit}}
+              </option>
+            {{/each}}
+          </select>
+        </label>
+      {{/if}}
+    {{/if}}
+
+    <h3>Return Geometry</h3>
+    <p>If true, the result includes the geometry associated with each feature returned. The default is true.</p>
+    <label>
+      returnGeometry
+      <input type='checkbox' value=true checked={{returnGeometry}} onclick={{action 'toggleReturnGeometry'}}>
+    </label>
+    <br>
+    <h3>Max Allowable Offset</h3>
+    <p>This option can be used to specify the maxAllowableOffset to be used for generalizing geometries returned by the query operation. The maxAllowableOffset is in the units of outSR. If outSR is not specified, maxAllowableOffset is assumed to be in the unit of the spatial reference of the map.</p>
+    <label>
+      maxAllowableOffset
+      {{input type='text'}}
+    </label>
+    <br>
+    <h3>Geometry Precision</h3>
+    <p>This option can be used to specify the number of decimal places in the response geometries returned by the Query operation. This applies to X and Y values only (not m or z-values).</p>
+    <label>
+      geometryPrecision
+      {{input type='text'}}
+    </label>
+    <br>
+    <h3>Output Spatial Reference</h3>
+    <p>The spatial reference of the returned geometry. The spatial reference can be specified as either a well-known ID or as a spatial reference JSON object.</p>
+    <label>
+      outSR
+      {{input type='text'}}
+    </label>
+    <br>
+
+    {{#if dataset.attributes.isDataVersioned}}
+    <h3>Geodatabase version</h3>
+    <p>Geodatabase version to query. This parameter applies only if the isDataVersioned property of the layer is true. If this is not specified, query will apply to the published map’s version.</p>
+    <label>
+      gdbVersion
+      {{input type='text'}}
+    </label>
+    {{/if}}
+ 
+    {{#if dataset.attributes.supportsAdvancedQueries}}
+    <h3>Return Distinct Values</h3>
+    <p>If true, it returns distinct values based on the fields specified in outFields. This parameter applies only if the supportsAdvancedQueries property of the layer is true.</p>
+    <label>
+      returnDistinctValues
+      {{input type='text'}}
+    </label>
+    <br>
+    {{/if}}
+    <h3>Return Ids Only</h3>
+    <p>If true, the response only includes an array of object IDs. Otherwise, the response is a feature set. The default is false.</p>
+    <label>
+      Return Ids Only
+      {{input type='text'}}
+    </label>
+    <br>
+    <h3>Return Count Only</h3>
+    <p>If true, the response only includes the count (number of features/records) that would be returned by a query. Otherwise, the response is a feature set. The default is false. This option supersedes the returnIdsOnly parameter. If returnCountOnly = true, the response will return both the count and the extent.</p>
+    <label>
+      returnCountOnly
+      {{input type='text'}}
+    </label>
+    <br>
+
+    {{#if dataset.attributes.advancedQueryCapabilities.supportsReturningQueryExtent}}
+    <h3>Return Extent Only</h3>
+    <p>If true, the response only includes the extent of the features that would be returned by the query. If returnCountOnly=true, the response will return both the count and the extent. The default is false. This parameter applies only if the supportsReturningQueryExtent property of the layer is true.</p>
+    <label>
+      returnExtentOnly
+      {{input type='text'}}
+    </label>
+    <br>
+    {{/if}}
+  {{/unless}}
+
+    {{#if dataset.attributes.supportsAdvancedQueries}}
+    <h3>Order By Fields</h3>
+    <p>One or more field names on which the features/records need to be ordered. Use ASC or DESC for ascending or descending, respectively, following every field to control the ordering.</p>
+    <label>
+      orderByFields
+      {{input type='text'}}
+    </label>
+    {{/if}}
+
+    <br>
+    <br>
+    <hr>
+    <h2>Statistics Requests</h2>
+    <p>If you are trying to make statistics related requests use this portion of the API Explorer</p>
+
+    <label>
+      Statistics Query?
+      <input type='checkbox' value=true checked={{isStatisticsRequest}} onclick={{action 'toggleStatisticsRequest'}}>
+    </label>
+
+    {{#if isStatisticsRequest}}
+      <h3>Group By Fields For Statistics</h3>
+      <label>
+        groupByFieldsForStatistics
+        {{input type='text'}}
+      </label>
+
+      <h3>Out Statistics</h3>
+      <label>
+        outStatistics
+        {{input type='text'}}
+      </label>
+    {{/if}}
 </form>
