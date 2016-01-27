@@ -10,7 +10,20 @@ export default Ember.Component.extend({
   displayLayerMetadata: true,
   isStatisticsRequest: false,
 
+  // dummy methods
+  requestSent: false,
+  responseBlockRender: Ember.computed('requestSent', function() {
+    if (this.get('requestSent')) {
+      return 'display: block;';
+    } else {
+      return 'display: hidden;';
+    }
+  }),
+
+  // dataset object
   dataset: null,
+
+  // This component will be able to fetch and cook its own dataset if need be 
   featureLayerUrl: '',
 
   fields: Ember.computed('dataset', function() {
@@ -57,14 +70,13 @@ export default Ember.Component.extend({
     return this.get('outFields') === 'outFields=*';
   }),
 
-  // params
-  // defaults
+  // **params**
   where: '1=1',
   objectIds: '',
   outFields: 'outFields=*',
   f: 'f=json',
 
-  // spatial params
+  // *spatial params*
   geometry: Ember.computed('dataset', function() {
     let geo; 
     geo = this.get('dataset').attributes.extent.coordinates.map(function(coord, index, array) {
@@ -95,7 +107,7 @@ export default Ember.Component.extend({
     'esriSpatialRelRelation'
   ],
 
-  inSR: '4326', // default to 4326
+  inSR: '4326',
 
   distance: '',
   units: '',
@@ -108,6 +120,8 @@ export default Ember.Component.extend({
     'esriSRUnit_USNauticalMile'
   ],
 
+  // end-of-spatial-params
+  // *return-params*
   returnGeometry: true,
 
   // TODO: params to implement
@@ -122,10 +136,12 @@ export default Ember.Component.extend({
   // 8. returnExtentOnly
 
 
+  // *stats params*
   orderByFields: '',
   groupByFieldsForStatistics: '',
   outStatistics: '',
-  // end of params
+  // end-of-stats-parasm
+  // end-of-params
 
   actions: {
     query() {

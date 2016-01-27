@@ -31,11 +31,17 @@
 <div style='width: inherit; word-break: break-word;'>
   {{queryString}}
 </div>
-<br>
-<br>
-
 <h2>Request Parameters</h2>
 <form>
+  <h2>Statistics Requests</h2>
+  <p>If you are trying to make statistics related requests use this portion of the API Explorer</p>
+
+  {{#if dataset.attributes.advancedQueryCapabilities.supportsStatistics}}
+  <label>
+    Statistics Query?
+    <input type='checkbox' value=true checked={{isStatisticsRequest}} onclick={{action 'toggleStatisticsRequest'}}>
+  </label>
+  {{/if}}
 
   <h3>Where</h3>
   <p>A where clause for the query filter. Any legal SQL where clause operating on the fields in the layer is allowed.</p>
@@ -43,6 +49,23 @@
     Where
     {{input type='text' value=where}}
   </label>
+
+  {{#if isStatisticsRequest}}
+    <h3>Group By Fields For Statistics</h3>
+    <p>One or more field names on which the values need to be grouped for calculating the statistics.</p>
+    <label>
+      groupByFieldsForStatistics
+      {{input type='text' value=groupByFieldsForStatistics}}
+    </label>
+
+    <h3>Out Statistics</h3>
+    <p>The definitions for one or more field-based statistics to be calculated.</p>
+    <label>
+      outStatistics
+      {{input type='text' value=outStatistics}}
+    </label>
+  {{/if}}
+
 
   {{#unless isStatisticsRequest}}
   <h3>Object Ids</h3>
@@ -224,29 +247,24 @@
       {{input type='text' value=orderByFields}}
     </label>
     {{/if}}
-
     <br>
-    <br>
-    <hr>
-    <h2>Statistics Requests</h2>
-    <p>If you are trying to make statistics related requests use this portion of the API Explorer</p>
 
-    <label>
-      Statistics Query?
-      <input type='checkbox' value=true checked={{isStatisticsRequest}} onclick={{action 'toggleStatisticsRequest'}}>
-    </label>
-
-    {{#if isStatisticsRequest}}
-      <h3>Group By Fields For Statistics</h3>
-      <label>
-        groupByFieldsForStatistics
-        {{input type='text'}}
-      </label>
-
-      <h3>Out Statistics</h3>
-      <label>
-        outStatistics
-        {{input type='text'}}
-      </label>
-    {{/if}}
+    <button {{action 'query'}}>Execute</button>
 </form>
+
+<div id='response'>
+  <h4>Curl</h4>
+  <div class="block curl"></div>
+
+  <h4>Request URL</h4>
+  <div class="block request_url"></div>
+
+  <h4>Response Body</h4>
+  <div class="block response_body"></div>
+
+  <h4>Response Code</h4>
+  <div class="block response_code"></div>
+
+  <h4>Response Headers</h4>
+  <div class="block response_headers"></div>
+</div>
