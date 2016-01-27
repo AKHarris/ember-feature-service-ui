@@ -34,7 +34,6 @@ export default Ember.Component.extend({
       return f;
     });
 
-    window.fields = fields;
     return fields;
   }),
 
